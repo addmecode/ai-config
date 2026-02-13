@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Solution Architect"
+  short_description: "Design AL solutions with clear boundaries"
+  default_prompt: "Use $al-solution-architect to design an extensible AL architecture for this feature."

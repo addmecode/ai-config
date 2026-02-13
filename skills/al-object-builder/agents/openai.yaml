@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Object Builder"
+  short_description: "Build AL objects with consistent structure"
+  default_prompt: "Use $al-object-builder to create or scaffold AL objects with correct naming, IDs, and folder placement."

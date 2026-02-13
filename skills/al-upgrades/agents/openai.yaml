@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Upgrades"
+  short_description: "Build safe and idempotent AL upgrades"
+  default_prompt: "Use $al-upgrades to create or review AL upgrade codeunits with tags, safe reads, and migration backfills."

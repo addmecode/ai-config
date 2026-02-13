@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Conventions"
+  short_description: "Apply Business Central AL coding conventions"
+  default_prompt: "Use $al-conventions to implement or review AL changes that must follow Business Central and AL conventions."

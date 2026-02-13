@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Performance"
+  short_description: "Optimize AL code for scale and speed"
+  default_prompt: "Use $al-performance to review or refactor AL code for better query, loop, and migration performance."

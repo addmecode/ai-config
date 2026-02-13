@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Integration"
+  short_description: "Implement AL HTTP, OData, and API integrations"
+  default_prompt: "Use $al-integration to design or review AL integrations over HTTP/HTTPS, OData, and REST/API endpoints with robust auth, retries, pagination, and error handling."

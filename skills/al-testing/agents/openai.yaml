@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Testing"
+  short_description: "Build AL tests"
+  default_prompt: "Use $al-testing to create or review AL tests with correct project placement, setup patterns, and assertions."
