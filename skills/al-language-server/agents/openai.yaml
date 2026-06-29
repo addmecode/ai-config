@@ -1,0 +1,4 @@
+interface:
+  display_name: "AL Language Server"
+  short_description: "Use alc.exe LSP for AL code changes"
+  default_prompt: "Use $al-language-server to inspect and modify an AL project with alc.exe language-server support."

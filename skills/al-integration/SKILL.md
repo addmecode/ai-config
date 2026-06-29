@@ -19,7 +19,8 @@ Use this workflow.
 3. Define extension-safe architecture.
 - Separate request mapping, transport, and business processing.
 - Use interfaces for transport and message handlers when multiple providers/endpoints exist.
-- Add integration events at pre/post processing boundaries.
+- Add positive integration events at pre/post processing boundaries for additive changes such as enriching request context, diagnostics, or mapping details.
+- Do not use generic `OnBefore...IsHandled` events to bypass sending, validation, retry, or response handling; use a transport/message handler interface implementation when behavior must be replaced.
 - Keep standard object changes extension-based (extensions + subscribers).
 
 4. Implement outbound HTTP/HTTPS flow.

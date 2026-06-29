@@ -32,7 +32,14 @@ Follow this sequence.
 
 6. Scaffold by object type.
 - Use `references/object-templates.md` for baseline structures.
-- For codeunits, create small focused procedures and prefer event-driven extension points.
+- For codeunits, create small focused procedures and prefer positive event-driven extension points.
+- For pages and codeunits, keep triggers as one-line delegators when they perform workflow logic; put the workflow in a purpose-named local procedure.
+- For pages, keep only field backing variables and genuinely shared state global. Put codeunit variables, records, temporary values, and labels in local procedure `var` sections when used by one procedure.
+- For setup, wizard, and NavigatePage objects, keep detection state separate from user action state. Use explicit variables for facts (`...Exists`), intended actions (`Create...`, `Update...`), and UI state (`...Enabled`, `...Visible`) instead of relying on inverted Booleans.
+- In setup wizards, preserve the policy difference between mandatory creation and optional update. Missing required setup can be forced/create-only, while existing setup should remain a user choice when the workflow requires it.
+- For codeunits, keep public entry points first and place the helper chain immediately below the entry point that uses it. Keep read/default helper groups and write-flow helper groups contiguous; do not interleave show/open actions inside insert/update helper chains.
+- Qualify global variables, labels, and current-object procedure calls with `this.`. Do not qualify locals, parameters, `Rec`, `CurrPage`, or record fields.
+- Do not scaffold generic `OnBefore...IsHandled` events. Prefer interface-based replacement for alternate implementations and purpose-named events for additive extension points.
 - For pages and page extensions, include only relevant fields/actions and avoid unused layout blocks.
 - For upgrade codeunits, read `references/upgrade-object-rules.md` before writing logic.
 - Hand off to `$al-upgrades` when the request is primarily upgrade logic.
@@ -52,3 +59,5 @@ Follow this sequence.
 
 - Use `references/object-templates.md` for starter templates per AL object type.
 - Use `references/upgrade-object-rules.md` for upgrade-specific safety rules.
+
+

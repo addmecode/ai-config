@@ -29,27 +29,30 @@ codeunit 50100 "Monitor Orchestrator"
 }
 ```
 
-## Integration Event Boundary
+## Positive Integration Event Boundary
 
-Apply when downstream extensions need controlled hooks.
+Apply when downstream extensions need controlled additive hooks.
 
 ```al
 [IntegrationEvent(false, false)]
-local procedure OnBeforeProcessInbox(var IntegrationInbox: Record "Integration Inbox"; var IsHandled: Boolean)
+local procedure OnBeforeProcessInbox(var IntegrationInbox: Record "Integration Inbox")
 begin
 end;
 
 procedure ProcessInbox(var IntegrationInbox: Record "Integration Inbox")
-var
-  IsHandled: Boolean;
 begin
-  OnBeforeProcessInbox(IntegrationInbox, IsHandled);
-  if IsHandled then
-    exit;
-
+  OnBeforeProcessInbox(IntegrationInbox);
   // Default process flow.
+  OnAfterProcessInbox(IntegrationInbox);
+end;
+
+[IntegrationEvent(false, false)]
+local procedure OnAfterProcessInbox(var IntegrationInbox: Record "Integration Inbox")
+begin
 end;
 ```
+
+Use interfaces or setup-driven implementation selection when extensions must replace the process flow. Avoid generic `OnBefore...IsHandled` events because they skip base code, prevent normal multi-subscriber behavior, and are fragile during refactoring.
 
 ## Status-Driven Processing
 

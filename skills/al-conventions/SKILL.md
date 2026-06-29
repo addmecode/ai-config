@@ -24,12 +24,23 @@ Use this workflow.
 - Use file naming pattern `<ObjectName>.<ObjectType>.al`.
 - Keep object names descriptive and short.
 - Organize by feature (`src/<feature>/...`) instead of object-type folders.
+- Place new procedures so the object reads top-down: public entry points and triggers first, followed by the procedures they call, with local helpers near their first caller when practical.
+- Keep triggers thin. If a trigger needs more than one meaningful statement, move the behavior into a purpose-named local procedure and have the trigger call only that procedure.
+- Preserve existing business behavior during renames, top-down reordering, and cleanup refactors unless the user explicitly asks for behavior changes. Re-check Boolean truth tables, captions, enabled/visible states, and finish/save conditions after every rename.
+- Do not let one Boolean represent opposite concepts such as record existence and user intent. When both are needed, split them into purpose-named variables such as `...Exists`, `Create...`, `Update...`, and `...Enabled` so `not` expressions do not hide business meaning.
+- For setup or wizard pages, model mandatory actions and optional user choices separately. If missing setup must always be created but existing setup is optionally updated, represent those paths explicitly and make `Finish` conditions match that policy.
+- Qualify current-object members with `this.` when reading or writing global variables, labels, or procedures from AL object code. Do not use `this.` for local variables, parameters, record fields, or standard globals such as `Rec`, `CurrPage`, and `CurrReport`.
+- Declare variables and labels in the narrowest practical scope. If a variable or label is used only by one procedure, make it local to that procedure. Keep globals only for page field backing variables, state shared by multiple procedures, single-instance state, or values that must be object-wide.
+- Order object code for top-down readability: entry points first, then the procedures they call, then lower-level helpers. Keep helper chains contiguous; do not move unrelated public procedures into the middle of a write/read flow. Reordering must be behavior-preserving.
 - Never modify standard application objects directly; prefer extensions and events.
+- When completing an implementation TODO, update nearby README/status/problem lists when they mention the completed work, unless the user asked to avoid documentation changes.
 
 4. Preserve extension-safe architecture.
 - Prefer events and event subscribers over modifications to standard application objects.
 - Add integration events at business boundaries for extensibility.
-- Use handled patterns when subscribers need to control flow.
+- Prefer positive, purpose-named events that add behavior or context without skipping base code.
+- Avoid new `IsHandled`/handled events by default; use interfaces, setup-driven implementation selection, or smaller positive events instead.
+- Use `IsHandled` only when no better extension model exists, document why it is necessary, and skip the smallest visible block of code possible. Do not use it to bypass validation or broad process flow.
 - Use descriptive event parameter names.
 
 5. Implement robust error handling and messaging.
@@ -63,3 +74,5 @@ Report reviews in this order.
 
 - Read `references/core-checklist.md` for day-to-day AL implementation checks.
 - Read `references/upgrade-checklist.md` for upgrade code reviews and changes.
+
+

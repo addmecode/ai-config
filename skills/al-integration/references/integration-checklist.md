@@ -39,5 +39,6 @@
 ## Extensibility
 
 - Use interfaces for transport and message handlers.
-- Add integration events around critical extension points.
+- Add positive integration events around critical extension points.
+- Avoid `IsHandled` events that skip sending, validation, retries, or response handling; use interface-based replacement for alternate providers or transport flows.
 - Keep handlers small and focused by responsibility.

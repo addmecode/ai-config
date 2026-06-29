@@ -24,7 +24,9 @@ Use this workflow.
 4. Choose extensibility model.
 - Prefer interface-driven composition for handlers and providers.
 - Add integration events at business boundaries, not inside low-level helpers.
-- Use handled patterns only where downstream control override is required.
+- Prefer positive, purpose-named events for additive extension points.
+- Avoid `IsHandled`/handled patterns as an override mechanism; use interfaces, setup, or separate implementation objects when downstream control replacement is required.
+- Allow `IsHandled` only as a last resort, with explicit rationale and the smallest skipped code block possible. Never use it to bypass validation or large process flow.
 
 5. Design data and process flow.
 - Define authoritative tables, status fields, and transition rules.

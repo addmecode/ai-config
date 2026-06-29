@@ -19,7 +19,9 @@ Use this checklist to review AL architecture decisions before implementation.
 
 - Confirm integration events exist at business boundaries.
 - Confirm event payload includes sufficient context.
-- Confirm handled pattern is used only when necessary.
+- Confirm events are positive and purpose-named, and do not skip base code by default.
+- Confirm replaceable behavior uses interfaces/setup-driven implementations before considering `IsHandled`.
+- Confirm any unavoidable `IsHandled` use has documented rationale, skips only a small visible block, and does not bypass validation.
 - Confirm subscribers avoid hidden side effects.
 
 ## Integration and Processing Flow

@@ -44,8 +44,15 @@ Use this workflow.
 - Flag missing negative tests or missing edge-case coverage.
 - If production changes are needed for testability, request or document those changes explicitly.
 
-8. Report outcome clearly.
+8. Run the tests after every change.
+- After creating or modifying AL code, run the suite and confirm it is green.
+- Use `references/run-tests.md` for the headless `ALTestRunner` command (derives ids,
+  names, and launch config from the project; works across AL projects).
+- Trust the console Success/Failure lines; ignore the documented non-fatal noise.
+
+9. Report outcome clearly.
 - List created or updated test files.
+- Report the per-codeunit Success/Failure results from the run.
 - Map tests to the scenarios they cover.
 - Note residual gaps and next tests to add.
 
@@ -53,3 +60,4 @@ Use this workflow.
 
 - Read `references/test-checklist.md` for review-time quality checks.
 - Read `references/test-templates.md` for baseline test codeunit patterns.
+- Read `references/run-tests.md` to run the suite headless after changes.

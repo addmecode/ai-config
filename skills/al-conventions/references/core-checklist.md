@@ -11,7 +11,9 @@
 
 - Organize by business feature, not by AL object type.
 - Prefer event subscribers and integration events for extension points.
-- Use handled patterns where subscribers may override base flow.
+- Prefer positive, purpose-named events that let multiple subscribers add behavior without skipping base code.
+- Avoid new `IsHandled`/handled patterns unless no better model exists; prefer interfaces or setup-driven implementation selection for replaceable behavior.
+- If `IsHandled` is unavoidable, document the reason, skip only a small visible block, and do not bypass validation.
 - Keep procedures focused and modular.
 
 ## Performance
