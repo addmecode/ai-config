@@ -30,7 +30,11 @@ param(
     [string]$PackageCachePath,
 
     # Extra arguments passed through to alc.exe (e.g. /ruleset:..., /analyzer:...).
-    [string[]]$AdditionalArgs = @()
+    [string[]]$AdditionalArgs = @(),
+
+    # Suppress the header and alc's verbose stdout. On success prints only "BUILD OK";
+    # on failure prints only the compiler error diagnostics.
+    [switch]$Quiet
 )
 
 $ErrorActionPreference = 'Stop'
@@ -85,13 +89,25 @@ if (-not $OutputFile) {
 
 $alc = Resolve-AlcPath -Default $DefaultAlcPath
 
-Write-Host "Compiler : $alc"
-Write-Host "Project  : $ProjectDir"
-Write-Host "Cache    : $PackageCachePath"
-Write-Host "Output   : $OutputFile"
+if (-not $Quiet) {
+    Write-Host "Compiler : $alc"
+    Write-Host "Project  : $ProjectDir"
+    Write-Host "Cache    : $PackageCachePath"
+    Write-Host "Output   : $OutputFile"
+}
 
-& $alc "/project:$ProjectDir" "/packagecachepath:$PackageCachePath" "/out:$OutputFile" @AdditionalArgs
-$exitCode = $LASTEXITCODE
+if ($Quiet) {
+    # Capture alc stdout: emit nothing on success, only the error diagnostics on failure.
+    $buildOutput = & $alc "/project:$ProjectDir" "/packagecachepath:$PackageCachePath" "/out:$OutputFile" @AdditionalArgs
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        $errs = $buildOutput | Where-Object { $_ -match ': error ' }
+        if ($errs) { $errs } else { $buildOutput }
+    }
+} else {
+    & $alc "/project:$ProjectDir" "/packagecachepath:$PackageCachePath" "/out:$OutputFile" @AdditionalArgs
+    $exitCode = $LASTEXITCODE
+}
 
 if ($exitCode -eq 0) {
     Write-Host "BUILD OK: $OutputFile"

@@ -45,7 +45,10 @@ param(
     [Parameter(Mandatory)] [string] $ContainerName,
     [Parameter(Mandatory)] [string] $AppFile,
     [System.Management.Automation.PSCredential] $Credential,
-    [switch] $ResetCredential
+    [switch] $ResetCredential,
+    # Suppress BcContainerHelper's host/warning banner; print only the final PUBLISHED OK
+    # (or the thrown error on failure).
+    [switch] $Quiet
 )
 
 $ErrorActionPreference = 'Stop'
@@ -86,11 +89,20 @@ function Resolve-ContainerCredential {
 }
 
 if (-not (Test-Path $AppFile)) { throw "App file not found: $AppFile" }
-if ($null -eq (Get-Module BcContainerHelper)) { Import-Module BcContainerHelper -DisableNameChecking }
+if ($null -eq (Get-Module BcContainerHelper)) {
+    if ($Quiet) { Import-Module BcContainerHelper -DisableNameChecking 3>$null 6>$null }
+    else { Import-Module BcContainerHelper -DisableNameChecking }
+}
 
 if ($null -eq $Credential) { $Credential = Resolve-ContainerCredential }
 
-Publish-BcContainerApp -containerName $ContainerName -appFile $AppFile `
-    -useDevEndpoint -credential $Credential
+if ($Quiet) {
+    # Silence the host/warning banner and progress; a real failure still throws (ErrorActionPreference=Stop).
+    Publish-BcContainerApp -containerName $ContainerName -appFile $AppFile `
+        -useDevEndpoint -credential $Credential 3>$null 6>$null
+} else {
+    Publish-BcContainerApp -containerName $ContainerName -appFile $AppFile `
+        -useDevEndpoint -credential $Credential
+}
 
 Write-Output "PUBLISHED OK: $AppFile -> $ContainerName"

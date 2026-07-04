@@ -1,2 +1,5 @@
 .vscode/
 .idea/
+
+# Backups created by tools/Sync-AiConfig.ps1 when replacing real files
+backups/
