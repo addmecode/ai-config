@@ -29,6 +29,19 @@
 - Add label comments for placeholders.
 - Use `TryFunction` for recoverable failure paths.
 
+## Streams and Blobs
+
+- An `InStream`/`OutStream` is only a view over a backing buffer (a
+  `Codeunit "Temp Blob"`). The stream is valid only while its backing object is
+  alive.
+- Do **not** create an `InStream`/`OutStream` from a **local** `Temp Blob` and
+  return the stream — the Temp Blob is destroyed when the procedure returns, so
+  later reads (e.g. `CopyStream`) see an empty buffer. Adding `var` to the stream
+  parameter does nothing; the buffer is already dead.
+- Pass the owning `Codeunit "Temp Blob"` through the call chain and create the
+  `InStream`/`OutStream` only at the point of use, where the buffer is guaranteed
+  alive. This is the canonical Microsoft BC pattern.
+
 ## App and Test Separation
 
 - Keep business logic in App project folders.
