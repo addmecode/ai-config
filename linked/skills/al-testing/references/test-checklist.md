@@ -30,3 +30,18 @@
 - Keep helper procedures focused and reusable.
 - Remove duplicate setup logic by extracting common helpers.
 - Keep tests isolated, repeatable, and order-independent.
+
+## Gotchas
+
+- **`Codeunit.Run` cannot be driven from a test that has pending uncommitted writes.**
+  It runs in the *same* transaction, so an inner error surfaces as
+  "The transaction is stopped..." instead of the expected caught `false` return.
+  Call the target logic directly (e.g. expose the entry point as `internal`, such
+  as a `ProcessEntry` procedure) and assert on its result rather than going through
+  `Codeunit.Run`.
+- **A fresh/fabricated `HttpResponseMessage` reports `IsSuccessStatusCode = true`**
+  (it defaults to a 2xx status) and AL exposes **no `HttpStatusCode` setter**. A mock
+  transport that hands back a new `HttpResponseMessage` therefore drives the
+  *success* path, not a failure path. To exercise failure handling, set the response
+  body/headers your code inspects, or route through a real non-2xx source — don't
+  assume a hand-built response can represent an error status.
