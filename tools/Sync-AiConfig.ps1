@@ -5,9 +5,9 @@
 
 .DESCRIPTION
     The repo is the single source of truth. Destinations (~/.claude, ~/.codex,
-    ...) become symlinks pointing back into the repo, so one edit reaches every
-    tool. Only skills and the shared memory file are linked; tool settings are
-    left machine-local.
+    ~/.config/opencode, ...) become symlinks pointing back into the repo, so one
+    edit reaches every tool. Only skills and the shared memory file are linked;
+    tool settings are left machine-local.
 
     State handling per target:
       - missing            -> create link
@@ -35,6 +35,10 @@
 .EXAMPLE
     ./Sync-AiConfig.ps1 -Model codex
     Sync only the Codex links.
+
+.EXAMPLE
+    ./Sync-AiConfig.ps1 -Model opencode
+    Sync only the OpenCode links.
 #>
 [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
 param(

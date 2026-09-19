@@ -1,8 +1,9 @@
 @{
     # Reusable base directories, expanded at runtime ('~' resolves to $HOME).
     Roots = @{
-        Claude = '~/.claude'
-        Codex  = '~/.codex'
+        Claude   = '~/.claude'
+        Codex    = '~/.codex'
+        OpenCode = '~/.config/opencode'
     }
 
     # One entry per model. Add a model = add a block here (no script changes).
@@ -24,6 +25,14 @@
             Links   = @(
                 @{ Source = 'linked/skills';           Target = '{Claude}/skills';    Type = 'children' }
                 @{ Source = 'linked/memory/MEMORY.md'; Target = '{Claude}/CLAUDE.md'; Type = 'file' }
+            )
+        }
+
+        opencode = @{
+            Enabled = $true
+            Links   = @(
+                @{ Source = 'linked/skills';           Target = '{OpenCode}/skills';    Type = 'children' }
+                @{ Source = 'linked/memory/MEMORY.md'; Target = '{OpenCode}/AGENTS.md'; Type = 'file' }
             )
         }
     }

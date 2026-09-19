@@ -6,11 +6,12 @@
   <img src="https://img.shields.io/badge/Dynamics_365-Business_Central_(AL)-0078D4" alt="Dynamics 365 Business Central (AL)">
   <img src="https://img.shields.io/badge/Claude_Code-supported-D97757" alt="Claude Code supported">
   <img src="https://img.shields.io/badge/OpenAI_Codex-supported-412991?logo=openai&logoColor=white" alt="OpenAI Codex supported">
+  <img src="https://img.shields.io/badge/OpenCode-supported-000000" alt="OpenCode supported">
 </p>
 
 AI assistant configuration for **Microsoft Dynamics 365 Business Central (AL)**
 development, shared across multiple AI coding tools (Claude Code, OpenAI Codex,
-and more).
+and OpenCode).
 
 This repository is the single source of truth. The included PowerShell script
 installs its content into each tool's configuration location as **symbolic
@@ -21,8 +22,9 @@ It syncs two things to every tool:
 - **Skills** — reusable `SKILL.md` workflows, checklists, and patterns for
   Business Central AL development, plus small helper scripts.
 - **Shared memory** — one `linked/memory/MEMORY.md`, linked to each tool's
-  memory file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`), so every tool
-  shares the same global instructions.
+  instruction file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`,
+  `~/.config/opencode/AGENTS.md`), so every tool shares the same global
+  instructions.
 
 ## Repository Layout
 
@@ -203,6 +205,9 @@ Use `-Force` to skip the confirmation prompts.
 ```powershell
 # Sync only one model (must be enabled in the manifest)
 ./tools/Sync-AiConfig.ps1 -Model codex
+
+# Sync only OpenCode
+./tools/Sync-AiConfig.ps1 -Model opencode
 
 # Remove managed links (uninstall); real files are left untouched
 ./tools/Sync-AiConfig.ps1 -Unlink

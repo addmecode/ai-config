@@ -1,8 +1,8 @@
 # Plan: Generic AI Config Repo with Symlink Sync
 
 Turn this repository from a Codex-only skill pack into the **single source of
-truth for all AI tool configuration** (Claude Code, OpenAI Codex, and future
-models), and install it everywhere via **symbolic links** driven by a
+truth for all AI tool configuration** (Claude Code, OpenAI Codex, OpenCode, and
+future models), and install it everywhere via **symbolic links** driven by a
 declarative manifest and one idempotent sync script.
 
 ## 1. Goals
@@ -60,9 +60,9 @@ are not tracked here.
 **Shared memory file:** `linked/memory/MEMORY.md` is the one source of truth for
 global instructions/memory. Each tool reads its memory from a different
 *filename* but the same *content*, so the manifest links that one file to each
-tool's expected name — `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` both
-resolve to `linked/memory/MEMORY.md`. Edit it once, every model sees it. A
-future model just adds
+tool's expected name — `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, and
+`~/.config/opencode/AGENTS.md` all resolve to `linked/memory/MEMORY.md`. Edit
+it once, every model sees it. A future model just adds
 one more link to the same file. (This covers the human-readable instructions
 memory; Claude's structured per-project `memory/` fact-store is a separate,
 Claude-specific format and is out of scope.)
@@ -80,8 +80,9 @@ stays machine-independent.
 @{
   # Reusable base dirs, expanded at runtime.
   Roots = @{
-    Claude = '~/.claude'
-    Codex  = '~/.codex'
+    Claude   = '~/.claude'
+    Codex    = '~/.codex'
+    OpenCode = '~/.config/opencode'
   }
 
   Models = @{
@@ -100,6 +101,14 @@ stays machine-independent.
       Links = @(
         @{ Source = 'linked/skills';           Target = '{Claude}/skills';    Type = 'children' }
         @{ Source = 'linked/memory/MEMORY.md'; Target = '{Claude}/CLAUDE.md'; Type = 'file' }  # shared memory
+      )
+    }
+
+    opencode = @{
+      Enabled = $true
+      Links = @(
+        @{ Source = 'linked/skills';           Target = '{OpenCode}/skills';    Type = 'children' }
+        @{ Source = 'linked/memory/MEMORY.md'; Target = '{OpenCode}/AGENTS.md'; Type = 'file' }  # shared memory
       )
     }
   }
@@ -164,6 +173,7 @@ listed for reference and are **deliberately not linked** — see note below.
 | --- | --- | --- | --- |
 | Claude Code | `~/.claude/skills/<name>/` | `~/.claude/CLAUDE.md` | `~/.claude/settings.json` |
 | OpenAI Codex | `~/.codex/skills/<name>/` | `~/.codex/AGENTS.md` | `~/.codex/config.toml` |
+| OpenCode | `~/.config/opencode/skills/<name>/` | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/opencode.json(c)` |
 
 **Why settings/config are excluded:** they hold machine-specific absolute paths
 (`C:\Users\adrri\...` in permissions, statusline, MCP binaries) and
