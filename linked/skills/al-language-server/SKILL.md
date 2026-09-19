@@ -40,8 +40,9 @@ Override defaults with `-OutputFile`, `-PackageCachePath`, or pass extra `alc.ex
    - Use any exposed LSP, MCP, or code-intelligence tool for definitions, references, diagnostics, document symbols, and workspace symbols.
    - If no direct LSP client tool is available, use AL extension CLI support where possible. Check `alc.exe /?`, `altool --help`, `altool workspace --help`, and `altool launchmcpserver --help`.
    - If AL MCP server support is available, prefer it for project-aware symbol and diagnostic queries. The extension may also expose `almcp.exe`.
-   - For objects from symbol dependencies, use AL MCP symbol search and relations. Never unpack, extract, or inspect the contents of `.app` packages.
-   - If the relevant MCP/LSP symbol query is unavailable or cannot provide the required information, stop this investigation step and inform the user. Do not use package extraction or another source-inspection workaround.
+   - For objects from symbol dependencies, use AL MCP symbol search and relations first. When signatures and metadata are insufficient, inspect the dependency's extracted source under the project's `.alpackages` folder.
+   - If the dependency has not already been extracted, unpack its `.app` package into a dedicated sibling folder in that same `.alpackages` directory. Preserve the original `.app` unchanged, do not overwrite an existing extraction, and use the extracted files as read-only source for navigation and analysis.
+   - If neither MCP/LSP metadata nor extracted dependency source can provide the required information, stop this investigation step and inform the user.
 3. Use plain `rg` search as a fallback or complement, not as the only source for symbol relationships when language tooling is available.
 4. Read nearby objects and dependencies before editing shared objects, events, interfaces, permissions, table/page extensions, or integration code.
 
