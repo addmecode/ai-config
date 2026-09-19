@@ -20,6 +20,7 @@ Use this workflow.
 
 3. Apply core implementation rules.
 - Use 2-space indentation.
+- Declare an AL `namespace` in every source file. Use one consistent, app-specific namespace across the project, typically based on the publisher and app name.
 - Use PascalCase for AL objects, variables, and procedures.
 - Use file naming pattern `<ObjectName>.<ObjectType>.al`.
 - Keep object names descriptive and short.
