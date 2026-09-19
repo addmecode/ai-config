@@ -44,15 +44,21 @@ Use this workflow.
 - Flag missing negative tests or missing edge-case coverage.
 - If production changes are needed for testability, request or document those changes explicitly.
 
-8. Run the tests after every change.
-- After creating or modifying AL code, run the suite and confirm it is green.
-- Use `references/run-tests.md` for the headless `ALTestRunner` command (derives ids,
-  names, and launch config from the project; works across AL projects).
+8. Build and run tests after every change.
+- First inspect the applicable test project's `.vscode/launch.json`.
+- When it targets Business Central SaaS (for example, `"environmentType": "Sandbox"`),
+  do **not** invoke a headless test runner, Docker, or a container-based test script.
+  Compile the test app instead (and build its app dependency when necessary), then clearly
+  tell the user that tests were not run because the target is SaaS.
+- For non-SaaS targets, run the suite and confirm it is green. Use
+  `references/run-tests.md` for the headless `ALTestRunner` command (derives ids, names,
+  and launch config from the project; works across AL projects).
 - Trust the console Success/Failure lines; ignore the documented non-fatal noise.
 
 9. Report outcome clearly.
 - List created or updated test files.
-- Report the per-codeunit Success/Failure results from the run.
+- Report the per-codeunit Success/Failure results from the run, or explicitly state that
+  tests were not run because the target is SaaS and the test app was compiled instead.
 - Map tests to the scenarios they cover.
 - Note residual gaps and next tests to add.
 
