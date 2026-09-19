@@ -40,7 +40,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # Known-good alc.exe location, tried first before scanning the extensions folder.
-$DefaultAlcPath = Join-Path $env:USERPROFILE ".vscode\extensions\ms-dynamics-smb.al-17.0.2273547\bin\win32\alc.exe"
+$DefaultAlcPath = Join-Path $env:USERPROFILE ".vscode\extensions\ms-dynamics-smb.al-18.0.2732683\bin\alc.exe"
 
 function Resolve-AlcPath {
     param([string]$Default)
@@ -51,17 +51,17 @@ function Resolve-AlcPath {
 
     $extensionsRoot = Join-Path $env:USERPROFILE ".vscode\extensions"
     $newest = Get-ChildItem -LiteralPath $extensionsRoot -Directory -Filter "ms-dynamics-smb.al-*" -ErrorAction SilentlyContinue |
-        ForEach-Object {
-            $numericVersion = (($_.Name -replace '^ms-dynamics-smb\.al-', '') -split '-')[0]
-            try { $v = [version]$numericVersion } catch { $v = [version]"0.0.0.0" }
-            [pscustomobject]@{
-                Version = $v
-                AlcPath = Join-Path $_.FullName "bin\win32\alc.exe"
-            }
-        } |
-        Where-Object { Test-Path -LiteralPath $_.AlcPath } |
-        Sort-Object Version -Descending |
-        Select-Object -First 1
+    ForEach-Object {
+        $numericVersion = (($_.Name -replace '^ms-dynamics-smb\.al-', '') -split '-')[0]
+        try { $v = [version]$numericVersion } catch { $v = [version]"0.0.0.0" }
+        [pscustomobject]@{
+            Version = $v
+            AlcPath = Join-Path $_.FullName "bin\win32\alc.exe"
+        }
+    } |
+    Where-Object { Test-Path -LiteralPath $_.AlcPath } |
+    Sort-Object Version -Descending |
+    Select-Object -First 1
 
     if ($newest) { return $newest.AlcPath }
 
@@ -104,14 +104,16 @@ if ($Quiet) {
         $errs = $buildOutput | Where-Object { $_ -match ': error ' }
         if ($errs) { $errs } else { $buildOutput }
     }
-} else {
+}
+else {
     & $alc "/project:$ProjectDir" "/packagecachepath:$PackageCachePath" "/out:$OutputFile" @AdditionalArgs
     $exitCode = $LASTEXITCODE
 }
 
 if ($exitCode -eq 0) {
     Write-Host "BUILD OK: $OutputFile"
-} else {
+}
+else {
     Write-Host "BUILD FAILED (alc exit code $exitCode)"
 }
 exit $exitCode
