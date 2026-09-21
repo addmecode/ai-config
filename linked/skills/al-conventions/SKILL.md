@@ -36,6 +36,15 @@ Use this workflow.
 - Never modify standard application objects directly; prefer extensions and events.
 - When completing an implementation TODO, update nearby README/status/problem lists when they mention the completed work, unless the user asked to avoid documentation changes.
 
+### Setup pages, activation, and assisted setup
+
+- Treat `Enabled` as an explicit activation state, not as a generic editability flag. When activation has prerequisites, validate the complete record only on the `false` to `true` transition; retain a table-level guard for programmatic updates as well as page input.
+- When the requirement explicitly defers field validation until activation, do not leave independent `OnValidate`, `MinValue`, or save-path `Validate` calls that contradict that policy. Assign the pending setup values first and validate `Enabled` last.
+- Use `TestField` for simple required-value checks. For business rules such as positive values or comparisons between fields, use purpose-named labels parameterized with `this.FieldCaption(...)`, rather than duplicating field names in error text.
+- For URL and email syntax, inspect standard application usage first. Prefer `Codeunit "Web Request Helper"` (`IsValidUri` and `IsHttpUrl`) and `Codeunit "Mail Management"` (`CheckValidEmailAddress` or `ValidateEmailAddressField`) over custom regular expressions.
+- When an enabled setup must be immutable in the UI, place its editable state control in a separate Status group and set `Editable` once on each configuration group. Do not repeat the same `Editable` expression on every field.
+- Assisted setup is for first-time onboarding. Keep each step focused on one decision; do not add a duplicated review page when the final step only needs a distinct activation decision. If an already-enabled setup must not be changed through the wizard, stop the wizard on open and direct the user to the normal Setup page.
+
 4. Preserve extension-safe architecture.
 - Prefer events and event subscribers over modifications to standard application objects.
 - Add integration events at business boundaries for extensibility.

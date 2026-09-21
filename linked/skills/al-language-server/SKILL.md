@@ -42,7 +42,8 @@ Override defaults with `-OutputFile`, `-PackageCachePath`, or pass extra `alc.ex
    - If AL MCP server support is available, prefer it for project-aware symbol and diagnostic queries. The extension may also expose `almcp.exe`.
    - For objects from symbol dependencies, use AL MCP symbol search and relations first. When signatures and metadata are insufficient, inspect the dependency's extracted source under the project's `.alpackages` folder.
    - If the dependency has not already been extracted, unpack its `.app` package into a dedicated sibling folder in that same `.alpackages` directory. Preserve the original `.app` unchanged, do not overwrite an existing extraction, and use the extracted files as read-only source for navigation and analysis.
-   - If neither MCP/LSP metadata nor extracted dependency source can provide the required information, stop this investigation step and inform the user.
+    - If neither MCP/LSP metadata nor extracted dependency source can provide the required information, stop this investigation step and inform the user.
+    - Before introducing custom parsing or regular expressions for a platform concern such as URLs, email addresses, HTTP, or authentication, inspect equivalent standard application source. Prefer the standard codeunit and its established call pattern when one exists.
 3. Use plain `rg` search as a fallback or complement, not as the only source for symbol relationships when language tooling is available.
 4. Read nearby objects and dependencies before editing shared objects, events, interfaces, permissions, table/page extensions, or integration code.
 
@@ -60,6 +61,7 @@ When the user asks for code changes in an open AL project:
    - If compilation cannot run because symbols, credentials, containers, or package cache are missing, state that clearly.
 6. Perform a short code review of the modified files before responding.
 7. During the post-edit review, explicitly check the modified AL objects for local style regressions: trigger bodies should delegate to local procedures, single-use variables and labels should be local, current-object globals/procedures should use `this.`, procedures should read top-down from entry point to helper chain, and refactors should not have changed user-visible behavior accidentally.
+8. For changes to setup activation or assisted setup, explicitly review the state transition (`false` to `true`), all activation prerequisites, the order of assignments and validation, and field/action editability on every wizard step.
 
 ## Required Post-Edit Review
 
