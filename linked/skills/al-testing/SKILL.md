@@ -47,9 +47,25 @@ Use this workflow.
 8. Build and run tests after every change.
 - First inspect the applicable test project's `.vscode/launch.json`.
 - When it targets Business Central SaaS (for example, `"environmentType": "Sandbox"`),
-  do **not** invoke a headless test runner, Docker, or a container-based test script.
-  Compile the test app instead (and build its app dependency when necessary), then clearly
-  tell the user that tests were not run because the target is SaaS.
+  run tests through the Microsoft AL MCP tools, which use the same Business Central
+  `TestRunnerHub` service as the official VS Code Test Explorer.
+- For SaaS, use this sequence:
+  1. Call `al_addproject` with the absolute test-project folder if it is not already loaded
+     by the AL MCP server.
+  2. Call `al_build` for the test project. Build any app dependencies first when the project
+     layout requires it.
+  3. Call `al_publish` with `skipBuild=true`, `environmentType`, `environmentName`, `tenant`,
+     `authentication='AAD'`, and the `schemaUpdateMode` from `launch.json`.
+  4. Call `al_run_tests` with the codeunit ID, optional test method names, and the test-project
+     folder. It reads connection settings from `launch.json` when explicit values are omitted.
+- For an already-published SaaS package, call `al_run_tests` directly
+- `al_run_tests` returning `succeeded=false` means a test or test run failed. Report the returned
+  method result, assertion/error output, call stack, and pass/fail/skip counts; do not treat the
+  tool failure as an infrastructure failure by default.
+- The tool may return a duplicate empty-method summary record. Base the human-readable result on
+  named test methods and explain this artifact when it affects aggregate counts.
+- For non-interactive SaaS/CI execution, provide a pre-acquired Entra token through
+  `BC_ACCESS_TOKEN`. For local interactive use, allow the tool to authenticate through AAD.
 - For non-SaaS targets, run the suite and confirm it is green. Use
   `references/run-tests.md` for the headless `ALTestRunner` command (derives ids, names,
   and launch config from the project; works across AL projects).
@@ -57,8 +73,8 @@ Use this workflow.
 
 9. Report outcome clearly.
 - List created or updated test files.
-- Report the per-codeunit Success/Failure results from the run, or explicitly state that
-  tests were not run because the target is SaaS and the test app was compiled instead.
+- Report the per-codeunit Success/Failure results from the run, including the named SaaS test
+  method result and useful error output when it fails.
 - Map tests to the scenarios they cover.
 - Note residual gaps and next tests to add.
 
