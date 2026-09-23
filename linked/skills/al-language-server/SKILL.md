@@ -40,6 +40,18 @@ Override defaults with `-OutputFile`, `-PackageCachePath`, or pass extra `alc.ex
    - Use any exposed LSP, MCP, or code-intelligence tool for definitions, references, diagnostics, document symbols, and workspace symbols.
    - If no direct LSP client tool is available, use AL extension CLI support where possible. Check `alc.exe /?`, `altool --help`, `altool workspace --help`, and `altool launchmcpserver --help`.
    - If AL MCP server support is available, prefer it for project-aware symbol and diagnostic queries. The extension may also expose `almcp.exe`.
+   - If AL MCP tools are unavailable because the server is not running, launch it with
+     the VS Code .NET Runtime extension's compatible ASP.NET Core runtime, not a new
+     runtime installation:
+
+     ```powershell
+     $env:DOTNET_ROOT = "C:\Users\adrri\AppData\Roaming\Code\User\globalStorage\ms-dotnettools.vscode-dotnet-runtime\.dotnet\10.0.12~x64~aspnetcore"
+     $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
+     & "<AL extension>\bin\altool.exe" launchmcpserver "<absolute App project path>" "<absolute Test project path>" --transport http --port 5000 --disableTelemetry
+     ```
+
+     Use `altool.exe` from the installed `ms-dynamics-smb.al-*` VS Code extension and
+     keep the server running while using its AL tools. Do not install a separate .NET runtime.
    - For objects from symbol dependencies, use AL MCP symbol search and relations first. When signatures and metadata are insufficient, inspect the dependency's extracted source under the project's `.alpackages` folder.
    - If the dependency has not already been extracted, unpack its `.app` package into a dedicated sibling folder in that same `.alpackages` directory. Preserve the original `.app` unchanged, do not overwrite an existing extraction, and use the extracted files as read-only source for navigation and analysis.
     - If neither MCP/LSP metadata nor extracted dependency source can provide the required information, stop this investigation step and inform the user.

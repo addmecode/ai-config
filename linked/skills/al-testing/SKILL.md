@@ -49,6 +49,18 @@ Use this workflow.
 - When it targets Business Central SaaS (for example, `"environmentType": "Sandbox"`),
   run tests through the Microsoft AL MCP tools, which use the same Business Central
   `TestRunnerHub` service as the official VS Code Test Explorer.
+- If AL MCP tools are unavailable because the server is not running, start it before
+  falling back to another runner. Use the .NET runtime supplied by the VS Code .NET
+  Runtime extension rather than installing a runtime:
+
+  ```powershell
+  $env:DOTNET_ROOT = "C:\Users\adrri\AppData\Roaming\Code\User\globalStorage\ms-dotnettools.vscode-dotnet-runtime\.dotnet\10.0.12~x64~aspnetcore"
+  $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
+  & "<AL extension>\bin\altool.exe" launchmcpserver "<absolute App project path>" "<absolute Test project path>" --transport http --port 5000 --disableTelemetry
+  ```
+
+  Use the installed `ms-dynamics-smb.al-*` extension's `altool.exe`; keep the MCP
+  process running while using its AL tools. Do not install a separate .NET runtime.
 - For SaaS, use this sequence:
   1. Call `al_addproject` with the absolute test-project folder if it is not already loaded
      by the AL MCP server.
