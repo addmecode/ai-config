@@ -3,9 +3,8 @@
     Compiles an AL project with alc.exe, locating the compiler automatically.
 
 .DESCRIPTION
-    Single entry point for building an AL app. It locates alc.exe by first
-    checking a known-good default path, then scanning the VS Code extensions
-    folder and picking the newest installed AL Language extension.
+    Single entry point for building an AL app. It scans the VS Code extensions
+    folder and picks the newest installed AL Language extension with alc.exe.
 
     The output .app file name defaults to "<Publisher>_<Name>_<Version>.app"
     read from the project's app.json, matching the usual AL naming convention.
@@ -39,16 +38,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Known-good alc.exe location, tried first before scanning the extensions folder.
-$DefaultAlcPath = Join-Path $env:USERPROFILE ".vscode\extensions\ms-dynamics-smb.al-18.0.2732683\bin\alc.exe"
-
 function Resolve-AlcPath {
-    param([string]$Default)
-
-    if (Test-Path -LiteralPath $Default) {
-        return $Default
-    }
-
     $extensionsRoot = Join-Path $env:USERPROFILE ".vscode\extensions"
     $newest = Get-ChildItem -LiteralPath $extensionsRoot -Directory -Filter "ms-dynamics-smb.al-*" -ErrorAction SilentlyContinue |
     ForEach-Object {
@@ -56,21 +46,40 @@ function Resolve-AlcPath {
         try { $v = [version]$numericVersion } catch { $v = [version]"0.0.0.0" }
         [pscustomobject]@{
             Version = $v
-            AlcPath = Join-Path $_.FullName "bin\win32\alc.exe"
+            AlcPaths = @(
+                (Join-Path $_.FullName "bin\alc.exe"),
+                (Join-Path $_.FullName "bin\win32\alc.exe")
+            )
         }
     } |
-    Where-Object { Test-Path -LiteralPath $_.AlcPath } |
-    Sort-Object Version -Descending |
+    ForEach-Object {
+        $candidate = $_
+        for ($index = 0; $index -lt $candidate.AlcPaths.Count; $index++) {
+            $alcPath = $candidate.AlcPaths[$index]
+            if (Test-Path -LiteralPath $alcPath -PathType Leaf) {
+                [pscustomobject]@{
+                    Version = $candidate.Version
+                    LayoutOrder = $index
+                    AlcPath = $alcPath
+                }
+            }
+        }
+    } |
+    Sort-Object @{ Expression = 'Version'; Descending = $true }, LayoutOrder |
     Select-Object -First 1
 
     if ($newest) { return $newest.AlcPath }
 
-    throw "Could not locate alc.exe. Checked the default path ($Default) and $extensionsRoot. Install the AL Language extension."
+    throw "Could not locate alc.exe under $extensionsRoot. Install the AL Language extension."
 }
 
-if (-not (Test-Path -LiteralPath $ProjectDir)) {
+if (-not [System.IO.Path]::IsPathRooted($ProjectDir)) {
+    throw '-ProjectDir must be an absolute path.'
+}
+if (-not (Test-Path -LiteralPath $ProjectDir -PathType Container)) {
     throw "Project folder does not exist: $ProjectDir"
 }
+$ProjectDir = (Resolve-Path -LiteralPath $ProjectDir).Path
 
 $appJsonPath = Join-Path $ProjectDir "app.json"
 if (-not (Test-Path -LiteralPath $appJsonPath)) {
@@ -87,7 +96,7 @@ if (-not $OutputFile) {
     $OutputFile = Join-Path $ProjectDir $appFileName
 }
 
-$alc = Resolve-AlcPath -Default $DefaultAlcPath
+$alc = Resolve-AlcPath
 
 if (-not $Quiet) {
     Write-Host "Compiler : $alc"

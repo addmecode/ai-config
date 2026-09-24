@@ -45,43 +45,19 @@ Use this workflow.
 - If production changes are needed for testability, request or document those changes explicitly.
 
 8. Build and run tests after every change.
-- First inspect the applicable test project's `.vscode/launch.json`.
-- When it targets Business Central SaaS (for example, `"environmentType": "Sandbox"`),
-  run tests through the Microsoft AL MCP tools, which use the same Business Central
-  `TestRunnerHub` service as the official VS Code Test Explorer.
-- If AL MCP tools are unavailable because the server is not running, start it before
-  falling back to another runner. Use the .NET runtime supplied by the VS Code .NET
-  Runtime extension rather than installing a runtime:
-
-  ```powershell
-  $env:DOTNET_ROOT = "C:\Users\adrri\AppData\Roaming\Code\User\globalStorage\ms-dotnettools.vscode-dotnet-runtime\.dotnet\10.0.12~x64~aspnetcore"
-  $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
-  & "<AL extension>\bin\altool.exe" launchmcpserver "<absolute App project path>" "<absolute Test project path>" --transport http --port 5000 --disableTelemetry
-  ```
-
-  Use the installed `ms-dynamics-smb.al-*` extension's `altool.exe`; keep the MCP
-  process running while using its AL tools. Do not install a separate .NET runtime.
-- For SaaS, use this sequence:
-  1. Call `al_addproject` with the absolute test-project folder if it is not already loaded
-     by the AL MCP server.
-  2. Call `al_build` for the test project. Build any app dependencies first when the project
-     layout requires it.
-  3. Call `al_publish` with `skipBuild=true`, `environmentType`, `environmentName`, `tenant`,
-     `authentication='AAD'`, and the `schemaUpdateMode` from `launch.json`.
-  4. Call `al_run_tests` with the codeunit ID, optional test method names, and the test-project
-     folder. It reads connection settings from `launch.json` when explicit values are omitted.
-- For an already-published SaaS package, call `al_run_tests` directly
-- `al_run_tests` returning `succeeded=false` means a test or test run failed. Report the returned
-  method result, assertion/error output, call stack, and pass/fail/skip counts; do not treat the
-  tool failure as an infrastructure failure by default.
-- The tool may return a duplicate empty-method summary record. Base the human-readable result on
-  named test methods and explain this artifact when it affects aggregate counts.
-- For non-interactive SaaS/CI execution, provide a pre-acquired Entra token through
-  `BC_ACCESS_TOKEN`. For local interactive use, allow the tool to authenticate through AAD.
-- For non-SaaS targets, run the suite and confirm it is green. Use
-  `references/run-tests.md` for the headless `ALTestRunner` command (derives ids, names,
-  and launch config from the project; works across AL projects).
-- Trust the console Success/Failure lines; ignore the documented non-fatal noise.
+- Inspect the applicable project `.vscode/launch.json` first. Keep Test dependent on App.
+- For SaaS, use wrappers in this order and read their direct output and exit status:
+  1. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir <absolute AppDir>`.
+  2. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir <absolute AppDir>`.
+  3. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir <absolute TestDir>`.
+  4. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir <absolute TestDir>`.
+  5. `<al-testing skill root>\scripts\Invoke-AlSaaSTests.ps1 -TestDir <absolute TestDir> -CodeunitId <id>`; pass
+     `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` when required.
+- The wrappers resolve current flat or legacy AL tooling and the VS Code .NET runtime dynamically;
+  they do not install a runtime. `altool` uses cached AAD authentication.
+- Do not use AL MCP to compile, publish, or run tests. MCP remains for diagnostics and intelligence.
+- For non-SaaS/container targets, retain the container-only workflow in `references/run-tests.md`.
+- Report named test-method results and useful failure output, not only aggregate status.
 
 9. Report outcome clearly.
 - List created or updated test files.

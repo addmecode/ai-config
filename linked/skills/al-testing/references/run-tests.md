@@ -1,5 +1,24 @@
 # Building, publishing, and running AL unit tests headless
 
+## SaaS path
+
+Use wrappers, not AL MCP, for compilation, publishing, and test execution. First inspect the
+App and Test `.vscode\launch.json` files and run these standalone commands in order:
+
+1. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir "<absolute AppDir>"`
+2. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir "<absolute AppDir>"`
+3. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir "<absolute TestDir>"`
+4. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir "<absolute TestDir>"`
+5. `<al-testing skill root>\scripts\Invoke-AlSaaSTests.ps1 -TestDir "<absolute TestDir>" -CodeunitId <id>`
+
+Use `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` where a launch
+file contains multiple configurations. The wrappers pass launch configuration environment,
+authentication, tenant, and schema values to current `altool`, use its cached AAD authentication,
+and dynamically select the VS Code .NET runtime without installing another runtime. Read direct
+output and exit status, and report named test-method results (including failure details).
+
+## Non-SaaS container path
+
 After every code change: rebuild the test app, publish it, run the suite, and report the
 per-codeunit Success/Failure lines from the console. Works for any AL project that has the
 `jamespearson.al-test-runner` VS Code extension, a test project with `app.json` +
@@ -13,7 +32,9 @@ because Windows PowerShell 5.1 rejects comments/trailing commas).
 
 ## Invoke each script as a standalone command
 
-Run `Build-AlApp.ps1`, `Publish-AlTestApp.ps1`, and `Invoke-AlTests.ps1` as **separate,
+Run `<al-language-server skill root>\scripts\Build-AlApp.ps1`,
+`<al-testing skill root>\scripts\Publish-AlTestApp.ps1`, and
+`<al-testing skill root>\scripts\Invoke-AlTests.ps1` as **separate,
 bare** tool calls — one command per call. Do **not** chain them (`Build...; if ($?) { Publish... }`),
 do **not** pipe the output (`Invoke-AlTests.ps1 ... | Select-String ...` / `2>$null | ...`),
 and do **not** prefix with `cd`. Permission allowlists match the command string (exact or by
@@ -29,7 +50,7 @@ the package cache to `<TestDir>\.alpackages`, and writes `<Publisher>_<Name>_<Ve
 (from `app.json`) into the test project folder. Use an absolute project path:
 
 ```
-& "C:\Users\adrri\.claude\skills\al-language-server\scripts\Build-AlApp.ps1" -ProjectDir "<abs TestDir>" -Quiet
+& "<al-language-server skill root>\scripts\Build-AlApp.ps1" -ProjectDir "<abs TestDir>" -Quiet
 ```
 
 Always pass **`-Quiet`**: on success it prints only `BUILD OK`; on failure only the `: error`
@@ -42,7 +63,7 @@ up in context and are re-sent every turn. Drop `-Quiet` only when you need the f
 container. If you skip this, the run silently shows only the previously published codeunits.
 
 ```
-scripts/Publish-AlTestApp.ps1 -ContainerName <container> -AppFile "<abs path to built .app>" -Quiet
+& "<al-testing skill root>\scripts\Publish-AlTestApp.ps1" -ContainerName <container> -AppFile "<abs path to built .app>" -Quiet
 ```
 
 Always pass **`-Quiet`**: it silences the BcContainerHelper banner + permission warnings +
@@ -70,7 +91,7 @@ diagnosing a publish problem.
 ## 3. Run the suite
 
 ```
-scripts/Invoke-AlTests.ps1 -TestDir "<abs path to test project>"
+& "<al-testing skill root>\scripts\Invoke-AlTests.ps1" -TestDir "<abs path to test project>"
 ```
 
 **While iterating, run a single test, not the whole suite** — the full run prints ~1 line per
@@ -79,7 +100,7 @@ suite for a final green check at the end of a phase. `-SelectionStart` is the li
 the `[Test]` procedure:
 
 ```
-scripts/Invoke-AlTests.ps1 -TestDir "<abs TestDir>" -FileName "<abs path to *.Codeunit.al>" -SelectionStart <line of the test procedure>
+& "<al-testing skill root>\scripts\Invoke-AlTests.ps1" -TestDir "<abs TestDir>" -FileName "<abs path to *.Codeunit.al>" -SelectionStart <line of the test procedure>
 ```
 
 `Invoke-AlTests.ps1` has **no `-Quiet`**: `Invoke-ALTestRunner` writes results through a channel
