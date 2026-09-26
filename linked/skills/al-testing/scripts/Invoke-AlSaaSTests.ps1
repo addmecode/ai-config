@@ -13,10 +13,51 @@ param(
 
     [string[]]$TestMethods,
 
-    [string]$LaunchConfiguration
+    [string]$LaunchConfiguration,
+
+    # Writes the complete altool output to a log file and prints a compact test summary.
+    [switch]$Quiet,
+
+    # Optional destination for the complete altool output when -Quiet is specified.
+    [string]$LogPath
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Get-QuietLogPath {
+    param([string]$ProjectDirectory)
+
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $logDirectory = Join-Path $ProjectDirectory '.altool-logs'
+    New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+    Join-Path $logDirectory "altool-tests-$timestamp.log"
+}
+
+function Write-QuietTestSummary {
+    param(
+        [string[]]$Output,
+        [bool]$Succeeded
+    )
+
+    $summary = $Output | Where-Object {
+        $_ -match '^===== Codeunit ' -or
+        $_ -match '^Test run completed:' -or
+        $_ -match '^Results:' -or
+        $_ -match '^  (PASS|FAIL|SKIP) '
+    }
+    if ($summary) {
+        $summary | ForEach-Object { Write-Host $_ }
+        return
+    }
+
+    if (-not $Succeeded) {
+        $meaningfulOutput = $Output | Where-Object {
+            $_ -notmatch '^\[MSAL\]' -and
+            $_ -notmatch '^\[LogMetricsFromAuthResult\]'
+        }
+        $meaningfulOutput | Select-Object -Last 40 | ForEach-Object { Write-Host $_ }
+    }
+}
 
 function Resolve-AltoolPath {
     $extensionsRoot = Join-Path $env:USERPROFILE '.vscode\extensions'
@@ -272,8 +313,33 @@ if ($TestMethods -and $TestMethods.Count -gt 0) {
 
 Write-Host "Running codeunit: $CodeunitId"
 Write-Host "Target         : $environmentType / $environmentName"
-& $altool @arguments
-$exitCode = $LASTEXITCODE
+$nativeErrorPreference = Get-Variable -Name PSNativeCommandUseErrorActionPreference -ValueOnly -ErrorAction SilentlyContinue
+$previousErrorActionPreference = $ErrorActionPreference
+if ($null -ne $nativeErrorPreference) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
+try {
+    $ErrorActionPreference = 'Continue'
+    $output = @(& $altool @arguments 2>&1 | ForEach-Object { [string]$_ })
+    $exitCode = $LASTEXITCODE
+}
+finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+    if ($null -ne $nativeErrorPreference) {
+        $PSNativeCommandUseErrorActionPreference = $nativeErrorPreference
+    }
+}
+if ($Quiet) {
+    if (-not $LogPath) {
+        $LogPath = Get-QuietLogPath -ProjectDirectory $TestDir
+    }
+    $output | Set-Content -LiteralPath $LogPath
+    Write-Host "Full log       : $LogPath"
+    Write-QuietTestSummary -Output $output -Succeeded ($exitCode -eq 0)
+}
+else {
+    $output | ForEach-Object { Write-Host $_ }
+}
 if ($exitCode -ne 0) {
     Write-Host "TEST RUN FAILED (altool exit code $exitCode)"
     exit $exitCode

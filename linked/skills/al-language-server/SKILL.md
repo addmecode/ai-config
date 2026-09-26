@@ -17,12 +17,19 @@ platform-specific `altool.exe`. SaaS wrappers select the newest x64 ASP.NET Core
 by the VS Code .NET Runtime extension, set `DOTNET_ROOT` and process `PATH`, and never install a
 runtime. `altool` uses cached AAD authentication unless `-NoCache` is requested for publishing.
 
+### Wrapper output
+
+Pass `-Quiet` to build and publish wrappers unless the user explicitly requests full console
+output or an investigation requires it. Quiet mode saves the complete tool output under
+`.altool-logs` in the target project and prints an actionable summary. Report the log path; on
+failure, inspect it and report only useful error details, excluding routine MSAL/AAD diagnostics.
+
 ## Build and publish wrappers
 
 Compile an absolute project path with:
 
 ```powershell
-& "<skill root>\scripts\Build-AlApp.ps1" -ProjectDir "<absolute project folder>"
+& "<skill root>\scripts\Build-AlApp.ps1" -ProjectDir "<absolute project folder>" -Quiet
 ```
 
 `Build-AlApp.ps1` defaults the package cache to `<ProjectDir>\.alpackages` and derives
@@ -32,7 +39,7 @@ Compile an absolute project path with:
 Publish an already-built SaaS artifact with:
 
 ```powershell
-& "<skill root>\scripts\Publish-AlApp.ps1" -ProjectDir "<absolute project folder>"
+& "<skill root>\scripts\Publish-AlApp.ps1" -ProjectDir "<absolute project folder>" -Quiet
 ```
 
 `Publish-AlApp.ps1` derives the artifact from `app.json` unless `-AppFile` is supplied. It reads

@@ -16,10 +16,38 @@ param(
 
     [switch]$ForceUpgrade,
 
-    [switch]$NoCache
+    [switch]$NoCache,
+
+    # Writes the complete altool output to a log file and prints a compact result.
+    [switch]$Quiet,
+
+    # Optional destination for the complete altool output when -Quiet is specified.
+    [string]$LogPath
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Get-QuietLogPath {
+    param(
+        [string]$ProjectDirectory,
+        [string]$Operation
+    )
+
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $logDirectory = Join-Path $ProjectDirectory '.altool-logs'
+    New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+    Join-Path $logDirectory "altool-$Operation-$timestamp.log"
+}
+
+function Write-QuietFailureSummary {
+    param([string[]]$Output)
+
+    $meaningfulOutput = $Output | Where-Object {
+        $_ -notmatch '^\[MSAL\]' -and
+        $_ -notmatch '^\[LogMetricsFromAuthResult\]'
+    }
+    $meaningfulOutput | Select-Object -Last 40 | ForEach-Object { Write-Host $_ }
+}
 
 function Resolve-AltoolPath {
     $extensionsRoot = Join-Path $env:USERPROFILE '.vscode\extensions'
@@ -295,14 +323,33 @@ if ($NoCache) { $arguments += '--nocache' }
 
 Write-Host "Publishing: $AppFile"
 Write-Host "Target    : $environmentType / $environmentName"
-$output = @(
-    & $altool @arguments 2>&1 | ForEach-Object {
-        $line = [string]$_
-        Write-Host $line
-        $line
+$nativeErrorPreference = Get-Variable -Name PSNativeCommandUseErrorActionPreference -ValueOnly -ErrorAction SilentlyContinue
+$previousErrorActionPreference = $ErrorActionPreference
+if ($null -ne $nativeErrorPreference) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
+try {
+    $ErrorActionPreference = 'Continue'
+    $output = @(& $altool @arguments 2>&1 | ForEach-Object { [string]$_ })
+    $exitCode = $LASTEXITCODE
+}
+finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+    if ($null -ne $nativeErrorPreference) {
+        $PSNativeCommandUseErrorActionPreference = $nativeErrorPreference
     }
-)
-$exitCode = $LASTEXITCODE
+}
+
+if ($Quiet) {
+    if (-not $LogPath) {
+        $LogPath = Get-QuietLogPath -ProjectDirectory $ProjectDir -Operation 'publish'
+    }
+    $output | Set-Content -LiteralPath $LogPath
+    Write-Host "Full log  : $LogPath"
+}
+else {
+    $output | ForEach-Object { Write-Host $_ }
+}
 
 $publishOutput = $output -join [Environment]::NewLine
 $identicalPackageAlreadyPublished =
@@ -313,6 +360,9 @@ if ($exitCode -ne 0 -and $identicalPackageAlreadyPublished) {
     exit 0
 }
 if ($exitCode -ne 0) {
+    if ($Quiet) {
+        Write-QuietFailureSummary -Output $output
+    }
     Write-Host "PUBLISH FAILED (altool exit code $exitCode)"
     exit $exitCode
 }
