@@ -46,13 +46,15 @@ Use this workflow.
 
 8. Build and run tests after every change.
 - Inspect the applicable project `.vscode/launch.json` first. Keep Test dependent on App.
-- For SaaS, use wrappers in this order and read their direct output and exit status:
-  1. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir <absolute AppDir>`.
-  2. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir <absolute AppDir>`.
-  3. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir <absolute TestDir>`.
-  4. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir <absolute TestDir>`.
-  5. `<al-testing skill root>\scripts\Invoke-AlSaaSTests.ps1 -TestDir <absolute TestDir> -CodeunitId <id>`; pass
-     `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` when required.
+- Validate only the projects affected by the change. For SaaS, read wrapper output and exit status:
+  - **App source, App version, or App dependency changed:**
+    1. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir <absolute AppDir>`.
+    2. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir <absolute AppDir>`.
+    3. Build and publish Test, then run its focused tests.
+  - **Only Test source changed:** build Test, publish Test, then run its focused tests. Do not rebuild or republish App.
+  - If Test's cached App artifact is missing or stale, first build/publish App and refresh that artifact, then continue with Test validation.
+  - Run `<al-testing skill root>\scripts\Invoke-AlSaaSTests.ps1 -TestDir <absolute TestDir> -CodeunitId <id>`; pass
+      `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` when required.
 - The wrappers resolve current flat or legacy AL tooling and the VS Code .NET runtime dynamically;
   they do not install a runtime. `altool` uses cached AAD authentication.
 - Do not use AL MCP to compile, publish, or run tests. MCP remains for diagnostics and intelligence.
