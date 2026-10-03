@@ -5,6 +5,11 @@ description: Use when working in Microsoft Dynamics 365 Business Central AL proj
 
 # AL Language Server
 
+Apply the role and project boundaries in `al-conventions`. Intelligence procedures
+are available to every AL role; executable validation belongs to the role assigned
+by the agent workflow. Loading this skill does not require a read-only or writing
+subagent to compile or publish.
+
 ## Tool resolution and boundaries
 
 Use AL MCP/LSP only for code intelligence: definitions, references, symbols, and diagnostics.
@@ -20,9 +25,11 @@ runtime. `altool` uses cached AAD authentication unless `-NoCache` is requested 
 ### Wrapper output
 
 Pass `-Quiet` to build and publish wrappers unless the user explicitly requests full console
-output or an investigation requires it. Quiet mode saves the complete tool output under
-`.altool-logs` in the target project and prints an actionable summary. Report the log path; on
-failure, inspect it and report only useful error details, excluding routine MSAL/AAD diagnostics.
+output or an investigation requires it. The build wrapper reports the artifact on success
+and compiler errors/exit status on failure; it does not save an operation log. The publish
+wrapper retains complete output under `.altool-logs` in the target project and prints an
+actionable summary. Report available log paths; on failure, inspect them and report useful
+error details, excluding routine MSAL/AAD diagnostics.
 
 ## Build and publish wrappers
 
@@ -35,6 +42,10 @@ Compile an absolute project path with:
 `Build-AlApp.ps1` defaults the package cache to `<ProjectDir>\.alpackages` and derives
 `<Publisher>_<Name>_<Version>.app` from `app.json`. It accepts `-OutputFile`,
 `-PackageCachePath`, and `-AdditionalArgs`, and returns the compiler exit code.
+Pass the project's required analyzer and ruleset arguments through `-AdditionalArgs`
+using the configured sources and installed tooling; the wrapper does not infer
+analyzer settings from VS Code or AL-Go. Keep project and package-cache paths
+absolute, and verify the compiler's source count matches the intended project.
 
 Publish an already-built SaaS artifact with:
 
@@ -49,11 +60,21 @@ authentication, and schema update values to `altool publishapp`. Use `-SchemaUpd
 `-ForceUpgrade`, or `-NoCache` only when needed. Read its direct output and exit status; only the
 explicit server response that the identical package is already published is reported as skipped.
 
-## Editing workflow
+## Role-specific procedures
 
-1. Confirm the workspace is an AL project and read nearby objects and dependencies.
-2. Use MCP/LSP intelligence for symbols and diagnostics; use text search as a complement.
-3. Make the smallest change consistent with AL conventions.
-4. Compile with `Build-AlApp.ps1`; for a configured SaaS project, publish with
-   `Publish-AlApp.ps1`. Do not substitute MCP for either operation.
-5. Review changed AL code for behavior and local style, then report validation or its blocker.
+- **Navigation and analysis:** confirm the AL project, inspect relevant objects and
+  dependencies, and use MCP/LSP for definitions, references, symbols, and available
+  diagnostics. Complement intelligence with scoped text search.
+- **Implementation:** use AL intelligence before editing and make the smallest
+  change consistent with `al-conventions`. Perform a short post-change self-review
+  using its technical checklist and applicable specialized skills.
+- **Executable validation:** the assigned validation owner checks diagnostics and
+  compiles with the build wrapper. Publish an already-built artifact only when
+  required by the project/user contract. For dependent App/Test validation and
+  test execution, follow `al-testing/references/run-tests.md` rather than defining
+  a second dependency-order procedure here.
+- **Independent review:** inspect the assigned changes using applicable technical
+  checklists and supplied validation evidence, without taking over execution.
+
+For every performed operation, inspect its direct result/exit status and report
+useful failures or blockers in the format required by the caller.

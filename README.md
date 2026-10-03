@@ -24,7 +24,11 @@ It syncs two things to every tool:
 - **Shared memory** — one `linked/memory/MEMORY.md`, linked to each tool's
   instruction file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`,
   `~/.config/opencode/AGENTS.md`), so every tool shares the same global
-  instructions.
+   instructions.
+
+OpenCode project agents and defaults are also versioned here. A separate
+`Link-OpenCodeProject.ps1` script links `linked/agents/.opencode` into a project
+directory chosen by the developer; they are not part of the global three-tool sync.
 
 ## Repository Layout
 
@@ -41,12 +45,22 @@ linked/                    # SYNCED — everything here is symlinked into the to
     ...
   memory/
     MEMORY.md              # single shared memory / global instructions
+  agents/
+    .opencode/             # shared OpenCode bundle, linked into selected projects
+      opencode.jsonc       # project defaults, including the primary orchestrator
+      agents/
+        orchestrator.md
+        explore.md
+        al-test-designer.md
+        al-implementer.md
+        al-reviewer.md
 
 config/                    # SETTINGS — what links where (no code)
   links.psd1               # declarative source -> target link mapping
 
 tools/                     # SCRIPTS — the sync tooling (never linked out)
   Sync-AiConfig.ps1        # installs/updates the links
+  Link-OpenCodeProject.ps1 # links the OpenCode bundle into a chosen project
   lib/
     Symlink.psm1           # symlink helpers
 ```
@@ -70,6 +84,45 @@ specialized workflow on top.
 | `al-integration` | HTTP, REST, OData, API page, webhook, pagination, authentication, retry, idempotency, and error-handling patterns. | `integration-checklist`, `integration-patterns` |
 | `al-performance` | AL performance reviews and refactors: filters, keys, `SetLoadFields`, set-based operations, temporary tables, dictionaries, migration throughput. | `performance-checklist`, `performance-patterns` |
 | `al-upgrades` | Safe upgrade codeunit design using upgrade tags, guarded reads, `DataTransfer`, idempotent routines, and review checklists. | `upgrade-patterns`, `upgrade-review-checklist` |
+
+## Linking OpenCode agents into a project
+
+The canonical agent definitions live in `linked/agents/.opencode/agents/`:
+
+- `orchestrator` applies the project's requested scope, coordinates specialists,
+  and owns executable validation and the final outcome.
+- `explore` supplies a read-only task brief.
+- `al-test-designer` designs focused tests without editing source.
+- `al-implementer` is the sole writing subagent and self-reviews its changes.
+- `al-reviewer` performs the final read-only scoped review.
+
+The bundle also includes `opencode.jsonc`, which selects `orchestrator` as the
+default primary agent. Agent instructions, models, and project defaults are
+maintained together in this repository.
+
+From the configuration repository, preview the link for an existing project:
+
+```powershell
+./tools/Link-OpenCodeProject.ps1 -ProjectPath ../my-al-project -WhatIf
+```
+
+Create it:
+
+```powershell
+./tools/Link-OpenCodeProject.ps1 -ProjectPath ../my-al-project
+```
+
+The result is `my-al-project/.opencode` pointing to
+`ai-config/linked/agents/.opencode`. `-ProjectPath` accepts an absolute or relative
+project directory; it is the parent of the `.opencode` link, not the link itself.
+
+If the project already has a `.opencode` folder or a different link, the script
+shows its location and asks whether to replace it. Answering No leaves the target
+unchanged. Answering Yes removes the existing content and creates the shared link.
+
+An already-correct link is left in place. `-WhatIf` previews the operation without
+asking for overwrite confirmation or changing files. The project-link script has
+no `-Force` parameter: replacing an existing target requires the interactive answer.
 
 ## Helper Scripts
 

@@ -5,6 +5,17 @@ description: Apply baseline Microsoft Dynamics 365 Business Central AL conventio
 
 # AL Conventions
 
+## Role and project boundaries
+
+Apply this baseline and specialized skills only to the operation assigned to your
+role. Skills describe technical methods; they do not select project tasks, set
+completion/status policy, expand file scope, or grant permission to edit, compile,
+publish, or run tests. The project prompt defines the requested outcome and gates;
+the agent workflow assigns who performs them. Read-only roles use analysis/review
+sections, writers use implementation/self-review sections, and the validation
+owner uses execution sections. In a standalone session, perform the applicable
+operations authorized by the user and repository instructions.
+
 Use this workflow.
 
 1. Confirm scope.
@@ -34,7 +45,7 @@ Use this workflow.
 - Declare variables and labels in the narrowest practical scope. If a variable or label is used only by one procedure, make it local to that procedure. Keep globals only for page field backing variables, state shared by multiple procedures, single-instance state, or values that must be object-wide.
 - Order object code for top-down readability: entry points first, then the procedures they call, then lower-level helpers. Keep helper chains contiguous; do not move unrelated public procedures into the middle of a write/read flow. Reordering must be behavior-preserving.
 - Never modify standard application objects directly; prefer extensions and events.
-- When completing an implementation TODO, update nearby README/status/problem lists when they mention the completed work, unless the user asked to avoid documentation changes.
+- Identify documentation made stale by the change. Update it only within the assigned scope; project/task status updates follow the project prompt and the agent's assigned role.
 
 ### Setup pages, activation, and assisted setup
 
@@ -73,7 +84,8 @@ Use this workflow.
 
 ## Review Output
 
-Report reviews in this order.
+For delegated reviews, follow the agent's output contract without adding a second
+report format. For a standalone review with no specified format, report in this order.
 
 1. Findings by severity with file and line reference.
 2. Open questions or assumptions.

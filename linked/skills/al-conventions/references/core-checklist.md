@@ -1,5 +1,15 @@
 # Core Checklist
 
+## Objects and Access
+
+- Allocate unique object IDs within the owning project's `app.json` ranges.
+- Follow the project's namespaces, affixes, and existing object conventions.
+- Provide appropriate captions and field `DataClassification` where required.
+- Extend the applicable permission sets for new objects with the intended access;
+  check that unauthorized roles do not gain access.
+- Check affected behavior against acceptance criteria and use `al-testing` for
+  test-coverage checks when applicable.
+
 ## Style and Naming
 
 - Use 2-space indentation.

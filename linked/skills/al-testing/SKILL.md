@@ -5,6 +5,11 @@ description: Design and implement Microsoft Dynamics 365 Business Central AL tes
 
 # AL Testing
 
+Apply the role and project boundaries in `al-conventions`. Use the sections for
+your assigned operation: scenario design, test implementation, read-only review,
+or executable validation. Loading this skill does not assign all four operations
+to one agent.
+
 Use this workflow.
 
 1. Apply baseline conventions first.
@@ -44,37 +49,21 @@ Use this workflow.
 - Flag missing negative tests or missing edge-case coverage.
 - If production changes are needed for testability, request or document those changes explicitly.
 
-8. Build and run tests after every change.
-- Inspect the applicable project `.vscode/launch.json` first. Keep Test dependent on App.
-- Pass `-Quiet` to build, publish, and SaaS-test wrappers unless the user explicitly requests
-  full console output or an investigation requires it. Quiet mode saves the complete tool output
-  under `.altool-logs` in the target App or Test project and prints an actionable summary. Report
-  the log path; on failure, inspect it and report only useful error details, excluding routine
-  MSAL/AAD and SignalR diagnostics.
-- Validate only the projects affected by the change. For SaaS, read wrapper output and exit status:
-  - **App source, App version, or App dependency changed:**
-    1. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir <absolute AppDir> -Quiet`.
-    2. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir <absolute AppDir> -Quiet`.
-    3. Build and publish Test, then run its focused tests.
-  - **Only Test source changed:** build Test, publish Test, then run its focused tests. Do not rebuild or republish App.
-  - If Test's cached App artifact is missing or stale, first build/publish App and refresh that artifact, then continue with Test validation.
-- Run `<al-testing skill root>\scripts\Invoke-AlSaaSTests.ps1 -TestDir <absolute TestDir> -CodeunitId <id> -Quiet`; pass
-      `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` when required.
-- The wrappers resolve current flat or legacy AL tooling and the VS Code .NET runtime dynamically;
-  they do not install a runtime. `altool` uses cached AAD authentication.
-- Do not use AL MCP to compile, publish, or run tests. MCP remains for diagnostics and intelligence.
-- For non-SaaS/container targets, retain the container-only workflow in `references/run-tests.md`.
-- Report named test-method results and useful failure output, not only aggregate status.
+8. Execute required validation in the assigned validation role.
+- Use `references/run-tests.md` as the single procedure for affected-project
+  selection, dependency order, SaaS/container execution, and named test results.
+- Use `al-language-server` for build/publication wrapper options, tool resolution,
+  and the MCP boundary. Follow the project's required gates; do not infer
+  mandatory publication merely from the presence of a launch configuration.
 
 9. Report outcome clearly.
-- List created or updated test files.
-- Report the per-codeunit Success/Failure results from the run, including the named SaaS test
-  method result and useful error output when it fails.
-- Map tests to the scenarios they cover.
-- Note residual gaps and next tests to add.
+- Follow the caller's output contract. Include evidence relevant to your role:
+  design maps scenarios to coverage, implementation identifies changed test files
+  and self-review, review identifies concrete coverage gaps, and execution reports
+  named test results and blockers. Do not claim checks that another role has not run.
 
 ## References
 
 - Read `references/test-checklist.md` for review-time quality checks.
 - Read `references/test-templates.md` for baseline test codeunit patterns.
-- Read `references/run-tests.md` to run the suite headless after changes.
+- Read `references/run-tests.md` for required headless validation in the execution role.

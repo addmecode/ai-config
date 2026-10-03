@@ -1,26 +1,66 @@
 # Building, publishing, and running AL unit tests headless
 
+## Validation scope and ownership
+
+This procedure is for the assigned validation owner, or a standalone agent
+authorized to execute tests. Designers, implementers, and read-only reviewers use
+their applicable skill sections without executing this procedure in the shared
+orchestration workflow. The project prompt determines required gates; this
+reference determines the technical selection and order of operations.
+
+Resolve the actual application/test folders from project configuration, not an
+assumed `App/` layout. Inspect the applicable manifests and launch configurations.
+Validate only affected projects and focused tests that verify changed behavior:
+
+- **App source, version, or dependencies changed:** build App; when publication
+  and tests are required, publish App before publishing/running its dependent Test
+  app. Refresh Test's cached App artifact from that build before building Test.
+- **Only Test changed:** build/publish Test and run focused tests; reuse the
+  current App build/publication evidence rather than rebuilding or republishing it.
+- **Test's cached App artifact is missing or stale:** reuse a verified current
+  artifact if available, otherwise build App. Refresh the cache and ensure the
+  matching App is published before dependent tests. Do not republish an identical
+  verified artifact unnecessarily.
+- **Build-only gate:** compile the affected project and needed dependencies,
+  without adding publication or test execution to the contract.
+
+Do not repeat successful operations unless later edits invalidate them. Broaden
+test execution only for a project requirement, new failures, or unresolved
+regression concerns. Read direct operation results and exit status; report named
+test-method outcomes and useful failure details, not only aggregate success.
+
+## Standalone operation calls
+
+Invoke each build, publish, and test script as its own tool call. Do not chain
+commands, pipe/redirect their output, or prefix them with `cd`; select the working
+directory through the tool. Permission allowlists match command strings/prefixes,
+so command wrappers can trigger unnecessary prompts. Read direct output and any
+operation log provided by the script.
+
 ## SaaS path
 
-Use wrappers, not AL MCP, for compilation, publishing, and test execution. First inspect the
-App and Test `.vscode\launch.json` files and run these standalone commands in order:
+Use the build/publication wrappers documented in `al-language-server/SKILL.md`
+for the projects selected above. That skill owns wrapper options, tooling/runtime
+resolution, build/publication output, and the MCP boundary.
 
-1. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir "<absolute AppDir>"`
-2. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir "<absolute AppDir>"`
-3. `<al-language-server skill root>\scripts\Build-AlApp.ps1 -ProjectDir "<absolute TestDir>"`
-4. `<al-language-server skill root>\scripts\Publish-AlApp.ps1 -ProjectDir "<absolute TestDir>"`
-5. `<al-testing skill root>\scripts\Invoke-AlSaaSTests.ps1 -TestDir "<absolute TestDir>" -CodeunitId <id>`
+After the selected build/publication operations, invoke the SaaS test wrapper:
 
-Use `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` where a launch
-file contains multiple configurations. The wrappers pass launch configuration environment,
-authentication, tenant, and schema values to current `altool`, use its cached AAD authentication,
-and dynamically select the VS Code .NET runtime without installing another runtime. Read direct
-output and exit status, and report named test-method results (including failure details).
+```powershell
+& "<al-testing skill root>\scripts\Invoke-AlSaaSTests.ps1" -TestDir "<absolute TestDir>" -CodeunitId <id> -Quiet
+```
+
+Use `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` when
+needed. The wrapper reads the test project's local launch configuration. Pass
+`-Quiet` unless full console output is requested or needed for investigation;
+it retains complete output under the test project's `.altool-logs` and returns
+an actionable summary. Report the log path and named test results. On failure,
+inspect the log and report useful details, excluding routine MSAL/AAD and SignalR
+diagnostics.
 
 ## Non-SaaS container path
 
-After every code change: rebuild the test app, publish it, run the suite, and report the
-per-codeunit Success/Failure lines from the console. Works for any AL project that has the
+For required container validation, apply the affected-project rules above, then
+build/publish the selected test app and run the focused tests. Works for any AL project that has the
 `jamespearson.al-test-runner` VS Code extension, a test project with `app.json` +
 `.vscode/launch.json`, and a running BC container referenced by that launch config.
 
@@ -30,34 +70,17 @@ from the project (Test Runner module resolved by wildcard; `ExtensionId`/`Extens
 `app.json`; launch config from the first `.vscode/launch.json` configuration, parsed as JSONC
 because Windows PowerShell 5.1 rejects comments/trailing commas).
 
-## Invoke each script as a standalone command
+### 1. Build the test app
 
-Run `<al-language-server skill root>\scripts\Build-AlApp.ps1`,
-`<al-testing skill root>\scripts\Publish-AlTestApp.ps1`, and
-`<al-testing skill root>\scripts\Invoke-AlTests.ps1` as **separate,
-bare** tool calls — one command per call. Do **not** chain them (`Build...; if ($?) { Publish... }`),
-do **not** pipe the output (`Invoke-AlTests.ps1 ... | Select-String ...` / `2>$null | ...`),
-and do **not** prefix with `cd`. Permission allowlists match the command string (exact or by
-prefix); any wrapper — a second statement, a pipe, a redirect, or a leading `cd` — changes that
-string so it no longer matches, and the harness prompts even though the standalone command is
-allowed. If you need to filter the run output, capture it to a variable in the same standalone
-call or just read the full console output; don't add a pipe to the allowlisted command.
-
-## 1. Build the test app
-
-Compile with the `al-language-server` skill's build wrapper — it resolves `alc.exe`, defaults
-the package cache to `<TestDir>\.alpackages`, and writes `<Publisher>_<Name>_<Version>.app`
-(from `app.json`) into the test project folder. Use an absolute project path:
+Compile with the `al-language-server` skill's build wrapper, using an absolute path:
 
 ```
 & "<al-language-server skill root>\scripts\Build-AlApp.ps1" -ProjectDir "<abs TestDir>" -Quiet
 ```
 
-Always pass **`-Quiet`**: on success it prints only `BUILD OK`; on failure only the `: error`
-diagnostics — instead of ~20 lines of banner + repeated `AL1025` warnings that otherwise pile
-up in context and are re-sent every turn. Drop `-Quiet` only when you need the full alc output.
+For build-wrapper options and output handling, follow `al-language-server/SKILL.md`.
 
-## 2. Publish the test app (the runner does NOT republish)
+### 2. Publish the test app (the runner does NOT republish)
 
 `Invoke-ALTestRunner` only *runs* tests against the app **already published** in the
 container. If you skip this, the run silently shows only the previously published codeunits.
@@ -88,16 +111,15 @@ diagnosing a publish problem.
   not invent other credential-caching workarounds.
 - The built `.app` is normally gitignored — leave it in place; it's the published artifact.
 
-## 3. Run the suite
+### 3. Run focused tests
 
 ```
 & "<al-testing skill root>\scripts\Invoke-AlTests.ps1" -TestDir "<abs path to test project>"
 ```
 
-**While iterating, run a single test, not the whole suite** — the full run prints ~1 line per
-test function (re-sent every turn); a single-test run is a handful of lines. Reserve the full
-suite for a final green check at the end of a phase. `-SelectionStart` is the line of (or inside)
-the `[Test]` procedure:
+Use a single-test selection when it covers the affected behavior. Use a broader
+suite only under the selection rules above. `-SelectionStart` is the line of (or
+inside) the `[Test]` procedure:
 
 ```
 & "<al-testing skill root>\scripts\Invoke-AlTests.ps1" -TestDir "<abs TestDir>" -FileName "<abs path to *.Codeunit.al>" -SelectionStart <line of the test procedure>
@@ -108,7 +130,7 @@ that stream-redirection (`6>&1`) does not capture, so a filter wrapper only scra
 tried and reverted. Reduce its output by scope (single test) and frequency, not by filtering.
 The fixed BcContainerHelper banner (~9 lines/run) cannot be trimmed from the wrapper.
 
-## Known non-fatal noise (tests already ran — trust the console output)
+### Known non-fatal noise (tests already ran — trust the console output)
 
 - **Do NOT add `-GetCodeCoverage` / `-GetPerformanceProfile`** to the runner. They fire an
   `Invoke-WebRequest` that prompts for input; in non-interactive PowerShell this throws
