@@ -15,6 +15,22 @@ subagent to compile or publish.
 Use AL MCP/LSP only for code intelligence: definitions, references, symbols, and diagnostics.
 Do **not** use MCP for compilation, publishing, or test execution.
 
+## Wrapper usage
+
+For compilation, publication, dependency-source lookup and package synchronization,
+invoke `Build-AlApp.ps1`, `Publish-AlApp.ps1`, `Get-AlDependencySource.ps1` and
+`Sync-AlAppDependency.ps1` through the interfaces documented in this skill.
+Do not reread their implementations or helper modules before routine calls, or
+reconstruct their operations with inline shell commands.
+
+Read script code only when a relevant change requires checking the documented
+contract, an option or behavior remains unclear after consulting the documentation,
+or an error requires implementation-level diagnosis. Inspect only the relevant
+parameters/functions, expanding the read only when necessary. Start failure
+investigation with the direct output and available operation log, not a full script
+read. This rule never replaces checking each result/exit status, required artifacts
+or source counts, nor does it waive any required validation gate.
+
 ## Dependency source authority
 
 When implementation, investigation, or review needs the source of an object

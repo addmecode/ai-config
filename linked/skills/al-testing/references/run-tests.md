@@ -39,6 +39,23 @@ test execution only for a project requirement, new failures, or unresolved
 regression concerns. Read direct operation results and exit status; report named
 test-method outcomes and useful failure details, not only aggregate success.
 
+## Wrapper usage
+
+Use the documented interfaces below for `Invoke-AlSaaSTests.ps1`,
+`Invoke-AlTests.ps1` and the container publication helper `Publish-AlTestApp.ps1`.
+For build, SaaS publication and package synchronization, follow the wrapper
+interfaces and usage policy in `al-language-server/SKILL.md`.
+Do not reread script implementations or helper modules before routine calls, or
+reconstruct their operations with inline shell commands.
+
+Read script code only when a relevant change requires checking the documented
+contract, an option or behavior remains unclear after consulting the documentation,
+or an error requires implementation-level diagnosis. Start with the direct result
+and compact failure details; inspect the operation log when those are insufficient,
+then only the relevant parameters/functions if code inspection is needed.
+Skipping repeated implementation reads does not permit skipping result/exit-status
+checks, named test outcomes or required validation gates.
+
 ## Standalone operation calls
 
 Invoke each build, publish, and test script as its own tool call. Do not chain
