@@ -24,6 +24,16 @@ Validate only affected projects and focused tests that verify changed behavior:
 - **Build-only gate:** compile the affected project and needed dependencies,
   without adding publication or test execution to the contract.
 
+For an App cache refresh, use the helper from `al-language-server` as its own call:
+
+```powershell
+& "<al-language-server skill root>\scripts\Sync-AlAppDependency.ps1" -AppProjectDir "<absolute AppDir>" -TestProjectDir "<absolute TestDir>"
+```
+
+It validates package identity and the Test dependency, skips identical contents,
+and preserves other versions. Build App first when the available artifact has not
+already been verified; synchronization itself is not build/publication evidence.
+
 Do not repeat successful operations unless later edits invalidate them. Broaden
 test execution only for a project requirement, new failures, or unresolved
 regression concerns. Read direct operation results and exit status; report named
@@ -53,9 +63,12 @@ Use `-TestMethods <name>` to focus a method and `-LaunchConfiguration <name>` wh
 needed. The wrapper reads the test project's local launch configuration. Pass
 `-Quiet` unless full console output is requested or needed for investigation;
 it retains complete output under the test project's `.altool-logs` and returns
-an actionable summary. Report the log path and named test results. On failure,
-inspect the log and report useful details, excluding routine MSAL/AAD and SignalR
-diagnostics.
+an actionable summary, including the failed method's error and up to five AL stack
+frames. It redacts common bearer/JWT/secret forms in the summary (the full local
+log remains sensitive). Named tests are counted separately from unnamed runner
+records and runner aggregates; never treat an empty `PASS` as an extra test.
+Report the log path and named results. Inspect the full log only when the compact
+failure details are insufficient or the runner fails outside a named test.
 
 ## Non-SaaS container path
 

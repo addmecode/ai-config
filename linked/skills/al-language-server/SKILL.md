@@ -21,24 +21,27 @@ When implementation, investigation, or review needs the source of an object
 from a dependency, use **only the current project's `.alpackages` cache** as
 the source authority.
 
-1. Identify the exact dependency package from the project's `app.json` and
-   `.alpackages` (publisher, name, and version), then inspect its locally
-   available source.
-2. If the matching `.app` is present but its source has not been extracted,
-   extract that local package into a local directory under `.alpackages` before
-   reading it. Do not substitute a package from another project, a global cache,
-   or a different version.
-3. Use the extracted/local source to verify namespaces, signatures, trigger
-   behavior, permissions, and implementation details. LSP symbol information
-   may help locate an object, but does not replace inspection of its matching
-   local package source when source-level behavior matters.
-4. Never download, fetch, clone, or cite dependency source from external
-   locations for this purpose.
-5. If the required object or source is absent from `.alpackages`, cannot be
-   extracted locally, or its package/version cannot be identified, stop that
-   source-dependent work and report the missing dependency source to the user.
-   Do not infer the implementation from memory or obtain it from an external
-   source.
+Always invoke the local source helper; do not manually search or unpack packages:
+
+```powershell
+& "<skill root>\scripts\Get-AlDependencySource.ps1" -ProjectDir "<absolute project folder>" -ObjectName 'No. Series' -ObjectType Codeunit
+```
+
+The script handles local package identification, SHA256 verification, reuse of
+existing source and extraction when needed. Do not duplicate these operations
+with inline shell commands or substitute packages from another project, a global
+cache, or a different version.
+
+- Read the returned `SourcePath` to verify namespaces, signatures, triggers,
+  permissions and implementation details. LSP symbols may help identify the
+  object, but do not replace its matching source when implementation matters.
+- For ambiguous matches, rerun with `-AppId`, `-Version` and/or `-ObjectType`
+  using verified project context; never guess a package version.
+- If the helper reports missing source, unsupported packages, unsafe paths,
+  modified cached source or unresolved ambiguity, stop the source-dependent work
+  and report the blocker to the user. Do not bypass the helper's checks.
+- Never download, fetch, clone or cite dependency source from external locations,
+  or infer an unavailable implementation from memory.
 
 Use the wrappers in this skill instead of fixed tool paths. They resolve the newest installed
 `ms-dynamics-smb.al-*` VS Code extension dynamically. `Build-AlApp.ps1` accepts both current
@@ -81,6 +84,18 @@ guarantee that standalone `alc.exe` supports external rulesets. Report `AL1033` 
 a blocker, not as permission to substitute rules or use AL-Go settings.
 Keep project and package-cache paths absolute, and verify the compiler's source
 count matches the intended project.
+
+After a successful App build, refresh its dependent Test cache with:
+
+```powershell
+& "<skill root>\scripts\Sync-AlAppDependency.ps1" -AppProjectDir "<absolute App folder>" -TestProjectDir "<absolute Test folder>"
+```
+
+This checks the Test dependency (its version is a minimum), App manifest, and
+actual package identity/version before copying. Identical SHA256 skips the copy;
+changed contents of the same package identity replace only that artifact atomically.
+Other cached versions and manifests are not deleted/edited. It does not compile,
+publish, or prove that an artifact reflects the latest source: use a verified build.
 
 Publish an already-built SaaS artifact with:
 

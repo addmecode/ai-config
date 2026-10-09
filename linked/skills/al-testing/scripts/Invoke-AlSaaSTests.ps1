@@ -23,6 +23,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'AlTestOutput.psm1') -Force
 
 function Get-QuietLogPath {
     param([string]$ProjectDirectory)
@@ -39,24 +40,8 @@ function Write-QuietTestSummary {
         [bool]$Succeeded
     )
 
-    $summary = $Output | Where-Object {
-        $_ -match '^===== Codeunit ' -or
-        $_ -match '^Test run completed:' -or
-        $_ -match '^Results:' -or
-        $_ -match '^  (PASS|FAIL|SKIP) '
-    }
-    if ($summary) {
-        $summary | ForEach-Object { Write-Host $_ }
-        return
-    }
-
-    if (-not $Succeeded) {
-        $meaningfulOutput = $Output | Where-Object {
-            $_ -notmatch '^\[MSAL\]' -and
-            $_ -notmatch '^\[LogMetricsFromAuthResult\]'
-        }
-        $meaningfulOutput | Select-Object -Last 40 | ForEach-Object { Write-Host $_ }
-    }
+    Get-AlSaaSTestSummary -Output $Output -Succeeded $Succeeded |
+        ForEach-Object { Write-Host $_ }
 }
 
 function Resolve-AltoolPath {
