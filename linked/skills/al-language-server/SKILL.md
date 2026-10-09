@@ -50,8 +50,9 @@ runtime. `altool` uses cached AAD authentication unless `-NoCache` is requested 
 ### Wrapper output
 
 Pass `-Quiet` to build and publish wrappers unless the user explicitly requests full console
-output or an investigation requires it. The build wrapper reports the artifact on success
-and compiler errors/exit status on failure; it does not save an operation log. The publish
+output or an investigation requires it. The build wrapper retains the compiler's source
+count and warning/error diagnostics even in quiet mode, and reports the artifact/exit
+status; it does not save an operation log. The publish
 wrapper retains complete output under `.altool-logs` in the target project and prints an
 actionable summary. Report available log paths; on failure, inspect them and report useful
 error details, excluding routine MSAL/AAD diagnostics.
@@ -61,16 +62,25 @@ error details, excluding routine MSAL/AAD diagnostics.
 Compile an absolute project path with:
 
 ```powershell
-& "<skill root>\scripts\Build-AlApp.ps1" -ProjectDir "<absolute project folder>" -Quiet
+& "<skill root>\scripts\Build-AlApp.ps1" -ProjectDir "<absolute project folder>" -UseCodeAnalyzers -Quiet
 ```
 
 `Build-AlApp.ps1` defaults the package cache to `<ProjectDir>\.alpackages` and derives
-`<Publisher>_<Name>_<Version>.app` from `app.json`. It accepts `-OutputFile`,
-`-PackageCachePath`, and `-AdditionalArgs`, and returns the compiler exit code.
-Pass the project's required analyzer and ruleset arguments through `-AdditionalArgs`
-using the configured sources and installed tooling; the wrapper does not infer
-analyzer settings from VS Code or AL-Go. Keep project and package-cache paths
-absolute, and verify the compiler's source count matches the intended project.
+`<Publisher>_<Name>_<Version>.app` from `app.json`. For local builds, use the
+**VS Code build configuration, never AL-Go settings**.
+Missing analyzers stop the build with an actionable error; never download/install
+analyzers or change the VS Code extension installation automatically.
+
+`-OutputFile`, `-PackageCachePath`, and other compiler options
+through `-AdditionalArgs` remain available; `/analyzer:` and `/ruleset:` are rejected
+in `-AdditionalArgs` to prevent bypassing this configuration policy.
+
+Ruleset URLs are passed unchanged to `alc.exe`; the wrapper does not download,
+materialize, or replace rulesets. `al.enableExternalRulesets = true` is not a
+guarantee that standalone `alc.exe` supports external rulesets. Report `AL1033` as
+a blocker, not as permission to substitute rules or use AL-Go settings.
+Keep project and package-cache paths absolute, and verify the compiler's source
+count matches the intended project.
 
 Publish an already-built SaaS artifact with:
 
