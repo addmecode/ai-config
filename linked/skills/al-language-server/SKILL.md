@@ -15,6 +15,31 @@ subagent to compile or publish.
 Use AL MCP/LSP only for code intelligence: definitions, references, symbols, and diagnostics.
 Do **not** use MCP for compilation, publishing, or test execution.
 
+## Dependency source authority
+
+When implementation, investigation, or review needs the source of an object
+from a dependency, use **only the current project's `.alpackages` cache** as
+the source authority.
+
+1. Identify the exact dependency package from the project's `app.json` and
+   `.alpackages` (publisher, name, and version), then inspect its locally
+   available source.
+2. If the matching `.app` is present but its source has not been extracted,
+   extract that local package into a local directory under `.alpackages` before
+   reading it. Do not substitute a package from another project, a global cache,
+   or a different version.
+3. Use the extracted/local source to verify namespaces, signatures, trigger
+   behavior, permissions, and implementation details. LSP symbol information
+   may help locate an object, but does not replace inspection of its matching
+   local package source when source-level behavior matters.
+4. Never download, fetch, clone, or cite dependency source from external
+   locations for this purpose.
+5. If the required object or source is absent from `.alpackages`, cannot be
+   extracted locally, or its package/version cannot be identified, stop that
+   source-dependent work and report the missing dependency source to the user.
+   Do not infer the implementation from memory or obtain it from an external
+   source.
+
 Use the wrappers in this skill instead of fixed tool paths. They resolve the newest installed
 `ms-dynamics-smb.al-*` VS Code extension dynamically. `Build-AlApp.ps1` accepts both current
 flat `bin\alc.exe` and legacy `bin\win32\alc.exe`; SaaS wrappers likewise resolve flat or
