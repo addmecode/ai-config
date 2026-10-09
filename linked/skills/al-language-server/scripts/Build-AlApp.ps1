@@ -216,6 +216,16 @@ $compilerArgs = @("/project:$ProjectDir", "/packagecachepath:$PackageCachePath",
 $analysisEnabled = [bool]$UseCodeAnalyzers
 $resolvedAnalyzers = @()
 if ($analysisEnabled) {
+    # This also applies to URL includes inside a local root ruleset.
+    $externalProperty = $settings.PSObject.Properties['al.enableExternalRulesets']
+    if ($externalProperty) {
+        if ($externalProperty.Value -isnot [bool]) {
+            throw 'al.enableExternalRulesets must be a Boolean in project VS Code settings.'
+        }
+        if ($externalProperty.Value -eq $true) {
+            $compilerArgs += '-enableexternalrulesets'
+        }
+    }
     $analyzerProperty = $settings.PSObject.Properties['al.codeAnalyzers']
     if (-not $analyzerProperty -or $analyzerProperty.Value -isnot [array]) {
         throw '-UseCodeAnalyzers requires an al.codeAnalyzers array in project VS Code settings.'
@@ -233,7 +243,6 @@ if ($analysisEnabled) { $ruleSetProperty = $settings.PSObject.Properties['al.rul
 if ($analysisEnabled -and $ruleSetProperty -and $ruleSetProperty.Value) {
     $ruleSetPath = [string]$ruleSetProperty.Value
     if ($ruleSetPath -match '^https?://') {
-        $externalProperty = $settings.PSObject.Properties['al.enableExternalRulesets']
         if ($externalProperty -and $externalProperty.Value -eq $false) {
             throw 'al.ruleSetPath is a URL but al.enableExternalRulesets is false.'
         }
